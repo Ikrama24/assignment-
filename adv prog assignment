@@ -1,0 +1,289 @@
+// server code
+
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+ 
+public class Server implements Runnable {
+    @Override
+    public void run() {
+        try {
+            String host = "jdbc:derby://localhost:1527/y"; // Ensure DB name matches
+            String un = "y";
+            String pass = "y";
+            Connection con = DriverManager.getConnection(host, un, pass);
+            ServerSocket ss = new ServerSocket(5678);
+            System.out.println("Server is ready and listening on port 5678");
+ 
+            while (true) {
+                // Accept client connection
+                Socket st = ss.accept();
+                System.out.println("Client connected");
+ 
+                // Receive data from client
+                DataInputStream dis = new DataInputStream(st.getInputStream());
+                 String srID = dis.readUTF();
+                int lptpsold = dis.readInt();
+
+                   double salesprofit = (lptpsold * 90);
+ 
+               
+                String chargecode;
+                double commision;
+ 
+               
+                
+                  if ( salesprofit> 20000 ) {
+                    chargecode = "0.1";
+                
+                    
+                } else if ( salesprofit >10000 ) {
+                    chargecode = "0.05";
+                    
+                } else {
+                   chargecode = "0.0";
+                    
+                }
+
+  
+                DataOutputStream dos = new DataOutputStream(st.getOutputStream());
+                // Query the database for the provided chargecode
+                Statement stmt = con.createStatement();
+                String query = "SELECT chargecode, chargereate FROM chargerate WHERE chargecode= " + chargecode + ".";
+                System.out.println("Executing query: " + query);
+ 
+                 
+                // storing the incoming value in resultset
+                ResultSet rs = stmt.executeQuery(query);
+                
+                 double chargerate = rs.getDouble("chargerate");
+                 
+                if (rs.next()) {
+                   
+                           System.out.println("No charge rate found");
+                    
+                    // calculating commision
+                     commision = (salesprofit * chargerate);
+ 
+                    // Send employee details to the client
+                    dos.writeDouble(salesprofit);
+                    dos.writeDouble(chargerate);
+                    dos.writeDouble(commision);
+ 
+                    System.out.println("Record found and sent to client: chargerate=" + chargerate + ", commision=" + commision);
+                } else {
+                    System.out.println("No record found for Employee ID: " + srID);
+                }
+       //closing all connections
+                dos.flush();
+                dos.close();
+                dis.close();
+                con.close();
+                ss.close();
+            }
+            
+        } catch (IOException | SQLException e) 
+        {
+            System.out.println("Error: " + e.getMessage());
+            
+             
+        }
+    }
+}
+
+ // client code
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Scanner;
+ 
+public class client implements Runnable {
+    @Override
+    public void run() {
+        try {
+            Socket st = new Socket("localhost", 5678);
+            Scanner sc = new Scanner(System.in);
+ 
+             System.out.println("Enter Sales Representative ID:");
+            String srID = sc.nextLine();
+            
+            System.out.println("Enter no. of Laptops sold ");
+            int lptpsold = sc.nextInt();
+
+             // Ensure lptpsold has numeric values and no invalid characters are entered.
+ 
+            // Send data to the server
+            DataOutputStream dos = new DataOutputStream(st.getOutputStream());
+            
+              dos.writeUTF(srID);
+               dos.writeInt(lptpsold);
+ 
+            // Receive data from the server
+            DataInputStream dis = new DataInputStream(st.getInputStream());
+            try {
+                  double salesprofit = dis.readDouble();  // Read salesprofit from server
+               String chargecode = dis.readUTF();  // Read chargecode from server
+                  double chargerate = dis.readDouble();  // Read chargerate from server
+                    double commision = dis.readDouble();  // Read commision from server
+                 
+                  System.out.println("Salesprofit: " + salesprofit);
+                System.out.println("Charge rate: " + chargerate);
+              System.out.println("commision; " + commision);
+
+                
+            } catch (EOFException e) {
+                System.out.println("Record not found in the database table");
+            }
+ 
+            dos.close();
+            dis.close();
+            st.close();
+            sc.close();
+            
+        } catch (IOException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+}
+
+// main server code
+
+ //mainclient.java
+class mainserver 
+{
+    public static void main(String args[])
+    {
+        Server s =new Server();
+        Thread t=new Thread(s);
+        t.start();
+    }
+}
+ 
+ // main client code
+
+ //mainclient.java
+class mainclient 
+{
+    public static void main(String args[])
+    {
+        client c =new client();
+        Thread t=new Thread(c);
+        t.start();
+    }
+}
+ 
+ // utility class
+package TRA ;
+
+import java.util.LinkedHashSet;
+
+import java.util.Scanner;
+
+
+public class utilityclass
+
+{
+
+public static void main(String[] args)
+
+{
+
+Scanner sc = new Scanner(System.in);
+
+LinkedHashSet hs =new LinkedHashSet();
+
+
+int srID;
+
+
+{
+
+System.out.println("................. Customer DETAILS ................. ");
+
+System.out.println("Please choose any one of the following Options ");
+
+System.out.println("----------------------------------------------------------- ");
+
+System.out.println("1. Add an elements in the LinkedHashSet");
+
+System.out.println("2. Delete specific Elements in the LinkedHashSet");
+
+System.out.println("3. Search specific elemenst in the LinkedHashSet");
+
+System.out.println("4. Exit");
+
+System.out.println("----------------------------------------------------------- ");
+
+
+
+{
+
+case 1:
+
+System.out.println("Enter sales representative ID");
+
+srID=sc.nextInt();
+
+
+
+//inserting an elements
+
+hs.add(srID);
+
+
+
+//displaying the inserted Elements
+
+System.out.println("----------------------------------------------------------- ");
+
+System.out.println("The ID is : "+srID);
+
+break;
+
+
+case 2:
+
+System.out.println("The ID is : "+srID);
+
+//delete specific elements in the LinkedHashSet.
+
+hs.remove("cc");
+
+System.out.println("After deleting: "+ srID);
+
+break;
+
+    
+case 3:
+
+System.exit(0);
+
+default:
+
+break;
+
+}
+
+System.out.println("Please continue(y/Y)");
+
+srID=sc.next().charAt(0);
+
+}
+
+while (srID=='y'||srID=='Y');
+
+}
+
+}
+   
